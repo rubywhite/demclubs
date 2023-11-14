@@ -18,8 +18,8 @@ tfoot, thead, tr, th, td, article, aside,
 canvas, details, embed, figure, figcaption,
 footer, header, hgroup, menu, nav, output, ruby,
 section, summary, time, mark, audio, video {
-	margin: 10;
-	padding: 10;
+	margin: 0;
+	padding: 0;
 	border: 0;
 	font-size: 100%;
 	font: inherit;
@@ -48,7 +48,7 @@ blockquote, q {
 
 table {
 	border-collapse: collapse;
-	border-spacing: 10;
+	border-spacing: 0;
 }
 
 body {
@@ -195,7 +195,7 @@ input, select, textarea {
 	}
 
 	p {
-		margin: 0 0 2rem 0;
+		margin: 0 0 2rem 2rem;
 	}
 
 	h1, h2, h3, h4, h5, h6 {
