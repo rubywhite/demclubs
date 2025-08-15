@@ -1,4 +1,4 @@
-Encourage everyone to try these out...
+Wonderful set of templates...
 
 Paradigm Shift by HTML5 UP
 html5up.net | @ajlkn
@@ -32,3 +32,4 @@ Credits:
 		jQuery (jquery.com)
 
 		Responsive Tools (github.com/ajlkn/responsive-tools)
+
