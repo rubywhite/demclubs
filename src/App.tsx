@@ -247,8 +247,8 @@ export default function App() {
             <BookOpen size={30} aria-hidden="true" />
             <h1 id="overview-title">{project.locale === "en" ? "Build bylaws one decision at a time" : "Cree estatutos una decisión a la vez"}</h1>
             <p>{project.locale === "en"
-              ? "DemClubs turns your club’s governance choices into a detailed working draft. It follows the topics in the SDCDP Club Manual’s model bylaws and shows what still needs member review."
-              : "DemClubs convierte las decisiones de gobierno de su club en un borrador de trabajo detallado. Sigue los temas de los estatutos modelo del Manual de Clubes de SDCDP y muestra lo que aún requiere revisión de los miembros."}</p>
+              ? "DemClubs Bylaws Builder turns your club’s governance choices into a detailed working draft. It follows the topics in the SDCDP Club Manual’s model bylaws and shows what still needs member review."
+              : "DemClubs Bylaws Builder convierte las decisiones de gobierno de su club en un borrador de trabajo detallado. Sigue los temas de los estatutos modelo del Manual de Clubes de SDCDP y muestra lo que aún requiere revisión de los miembros."}</p>
             <div className="welcome-actions">
               <button className="primary" onClick={() => setShowOverview(false)}>{project.locale === "en" ? "Begin the first decision" : "Comenzar la primera decisión"}<ArrowRight size={17} /></button>
               <button onClick={() => setView("draft")}>{project.locale === "en" ? "Preview the draft structure" : "Ver la estructura del borrador"}</button>
