@@ -52,7 +52,7 @@ export function exportReport(project: BuilderProject, locale: Locale) {
 }
 
 export async function exportDocx(project: BuilderProject, locale: Locale) {
-  const sections = buildDraft(project.clubName, project.answers);
+  const sections = buildDraft(project.clubName, project.answers, project.customAnswers);
   const title = project.clubName.trim() || (locale === "en" ? "Club bylaws" : "Estatutos del club");
   const document = new Document({
     creator: "DemClubs Bylaws Builder",
@@ -87,10 +87,10 @@ export async function exportDocx(project: BuilderProject, locale: Locale) {
             spacing: { before: 320, after: 120 },
             children: [new TextRun({ text: section.title[locale], bold: true, color: "000000", size: 26 })]
           }),
-          new Paragraph({
+          ...section.body[locale].split("\n\n").map((paragraph) => new Paragraph({
             spacing: { after: 180, line: 320 },
-            children: [new TextRun({ text: section.body[locale], color: "000000", size: 23 })]
-          })
+            children: [new TextRun({ text: paragraph, color: "000000", size: 23 })]
+          }))
         ])
       ]
     }]
@@ -105,6 +105,6 @@ export function exportProject(project: BuilderProject) {
 
 export async function importProject(file: File): Promise<BuilderProject> {
   const parsed = JSON.parse(await file.text()) as BuilderProject;
-  if (parsed.version !== 1 || !parsed.answers || !parsed.locale) throw new Error("INVALID_PROJECT");
-  return parsed;
+  if (![1, 2].includes(parsed.version) || !parsed.answers || !parsed.locale) throw new Error("INVALID_PROJECT");
+  return { ...parsed, version: 2, customAnswers: parsed.customAnswers || {} };
 }

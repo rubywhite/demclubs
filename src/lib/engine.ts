@@ -9,6 +9,8 @@ const coverageRules = [
   { id: "officers", title: ["Officers and vacancies", "Dirigentes y vacantes"], terms: ["officer", "president", "treasurer", "vacan", "dirigente", "tesorer"] },
   { id: "elections", title: ["Nominations and elections", "Nominaciones y elecciones"], terms: ["nomination", "election", "term of office", "nominación", "elección"] },
   { id: "endorsements", title: ["Endorsements", "Respaldos"], terms: ["endorse", "candidate", "measure", "respaldo", "candidat"] },
+  { id: "representation", title: ["Party representatives and rosters", "Representantes partidarios y padrones"], terms: ["representative", "associate", "roster", "delegate", "representante", "asociado", "padrón"] },
+  { id: "chartering", title: ["Annual charter compliance", "Cumplimiento de afiliación anual"], terms: ["charter", "twenty", "director of clubs", "afiliación", "veinte", "director de clubes"] },
   { id: "finance", title: ["Finances and records", "Finanzas y registros"], terms: ["financial", "funds", "budget", "records", "finanz", "fondos", "presupuesto"] },
   { id: "discipline", title: ["Discipline and conflicts", "Disciplina y conflictos"], terms: ["discipline", "remove", "suspend", "conflict of interest", "disciplina", "expuls", "conflicto"] },
   { id: "amendments", title: ["Amendments", "Enmiendas"], terms: ["amend", "bylaws may be", "enmend", "estatutos podrán"] },
@@ -18,12 +20,13 @@ const coverageRules = [
 
 export function createProject(): BuilderProject {
   return {
-    version: 1,
+    version: 2,
     mode: "new",
     locale: "en",
     clubName: "",
     clubType: "geographic",
     answers: {},
+    customAnswers: {},
     importedText: "",
     updatedAt: new Date().toISOString()
   };
@@ -68,7 +71,7 @@ export function completion(project: BuilderProject) {
 
 export function markdownDraft(project: BuilderProject, locale: Locale) {
   const title = project.clubName.trim() || (locale === "en" ? "Club bylaws" : "Estatutos del club");
-  const sections = buildDraft(project.clubName, project.answers);
+  const sections = buildDraft(project.clubName, project.answers, project.customAnswers);
   return `# ${title}\n\n${locale === "en" ? "Working draft — review before adoption." : "Borrador de trabajo — revisar antes de su adopción."}\n\n${sections.map((section) => `## ${section.title[locale]}\n\n${section.body[locale]}`).join("\n\n")}`;
 }
 

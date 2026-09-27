@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { del, get, set } from "idb-keyval";
 import {
   AlertTriangle, ArrowLeft, ArrowRight, Check, ChevronDown, Clipboard,
-  Download, FileText, Languages, LockKeyhole, ShieldCheck, Sparkles, Upload, X
+  BookOpen, Download, FileCheck2, FileText, Languages, ListChecks, LockKeyhole,
+  ShieldCheck, Sparkles, Upload, X
 } from "lucide-react";
 import { authorityLabels, buildDraft, questions, sections } from "./data/rulePack";
 import { completion, createProject, projectReadiness, recommendationsMarkdown } from "./lib/engine";
@@ -18,14 +19,14 @@ const copy = {
     next: "Next decision", review: "Review results", required: "Required before review", impact: "Draft impact", notSet: "No option recorded",
     import: "Bring in existing bylaws", importHelp: "Upload a text-based PDF, DOCX, or TXT file, or paste text. It stays in this browser unless you opt into AI review.", choose: "Choose file",
     paste: "Paste bylaws text", imported: "Document text imported", scanned: "This PDF appears to be scanned. OCR is not included; paste accessible text instead.",
-    unsupported: "Use a PDF, DOCX, or TXT file under 10 MB.", draft: "Draft", report: "Readiness", sources: "Method",
+    unsupported: "Use a PDF, DOCX, or TXT file under 10 MB.", draft: "Draft", report: "Readiness", sources: "Sources & method",
     working: "Working draft", unresolved: "unresolved decisions", ready: "Ready for club review", copyDraft: "Copy draft", copied: "Copied",
     docx: "Download DOCX", markdown: "Download Markdown", reportDownload: "Download report", ai: "Enhanced review",
     aiHelp: "Optional AI can suggest follow-up questions and clearer wording. The rules and your recorded decisions remain authoritative.",
     consent: "I agree to send the imported text and recorded answers to OpenAI for this review. DemClubs requests no response storage.", askAi: "Run enhanced review",
     aiUnavailable: "Enhanced review is not configured. The deterministic audit and draft remain available.", reset: "Start over", delete: "Delete local project",
     project: "Project", exportProject: "Export project", importProject: "Import project", privacy: "Privacy", disclaimer: "Educational drafting assistance—not legal advice or party approval.",
-    methodTitle: "How recommendations are classified", methodBody: "County or essential requirements are separated from recommended safeguards, common local practice, and club preferences. The research set contains 55 listed clubs; all 53 linked bylaws were analyzed and two clubs have no bylaws link.",
+    methodTitle: "Sources and classification", methodBody: "Mandatory charter and endorsement provisions are drawn from the current published SDCDP Bylaws and Policies and Procedures. CDP rules govern eligibility and selection for state pre-endorsing conference representatives. Those requirements are separated from recommended safeguards, common local practice, and club preferences. The 2015 Club Manual model remains drafting context, not the controlling authority.",
     close: "Close", selectFirst: "Record an option to update this clause.", reviewLabel: "Status", clearText: "Remove imported text"
   },
   es: {
@@ -35,14 +36,14 @@ const copy = {
     next: "Siguiente decisión", review: "Revisar resultados", required: "Requerido antes de la revisión", impact: "Impacto en el borrador", notSet: "Ninguna opción registrada",
     import: "Incorporar estatutos existentes", importHelp: "Suba un PDF con texto, DOCX o TXT, o pegue texto. Permanecerá en este navegador salvo que active la revisión con IA.", choose: "Elegir archivo",
     paste: "Pegue el texto de los estatutos", imported: "Texto del documento importado", scanned: "Este PDF parece escaneado. La versión inicial no incluye OCR; pegue texto accesible.",
-    unsupported: "Use un archivo PDF, DOCX o TXT de menos de 10 MB.", draft: "Borrador", report: "Preparación", sources: "Método",
+    unsupported: "Use un archivo PDF, DOCX o TXT de menos de 10 MB.", draft: "Borrador", report: "Preparación", sources: "Fuentes y método",
     working: "Borrador de trabajo", unresolved: "decisiones pendientes", ready: "Listo para revisión del club", copyDraft: "Copiar borrador", copied: "Copiado",
     docx: "Descargar DOCX", markdown: "Descargar Markdown", reportDownload: "Descargar informe", ai: "Revisión mejorada",
     aiHelp: "La IA opcional puede sugerir preguntas de seguimiento y redacción más clara. Las reglas y decisiones registradas siguen siendo la autoridad.",
     consent: "Acepto enviar el texto importado y las respuestas registradas a OpenAI para esta revisión. DemClubs solicita que no se almacene la respuesta.", askAi: "Ejecutar revisión mejorada",
     aiUnavailable: "La revisión mejorada no está configurada. La auditoría determinista y el borrador siguen disponibles.", reset: "Comenzar de nuevo", delete: "Eliminar proyecto local",
     project: "Proyecto", exportProject: "Exportar proyecto", importProject: "Importar proyecto", privacy: "Privacidad", disclaimer: "Asistencia educativa para redactar; no constituye asesoría legal ni aprobación del partido.",
-    methodTitle: "Cómo se clasifican las recomendaciones", methodBody: "Los requisitos del condado o esenciales se separan de las salvaguardas recomendadas, las prácticas locales comunes y las preferencias del club. La investigación contiene 55 clubes: se analizaron los 53 estatutos enlazados y dos clubes no tienen enlace.",
+    methodTitle: "Fuentes y clasificación", methodBody: "Las disposiciones obligatorias de afiliación y respaldo provienen de los Estatutos y las Políticas y Procedimientos vigentes publicados por SDCDP. Las reglas del CDP rigen la elegibilidad y selección de representantes para conferencias estatales de pre-respaldo. Estos requisitos se distinguen de salvaguardas recomendadas, prácticas locales comunes y preferencias del club. El modelo de 2015 del Manual de Clubes sigue siendo contexto de redacción, no la autoridad rectora.",
     close: "Cerrar", selectFirst: "Registre una opción para actualizar esta cláusula.", reviewLabel: "Estado", clearText: "Eliminar texto importado"
   }
 } as const;
@@ -56,6 +57,7 @@ export default function App() {
   const [project, setProject] = useState<BuilderProject>(createProject);
   const [hydrated, setHydrated] = useState(false);
   const [current, setCurrent] = useState(0);
+  const [showOverview, setShowOverview] = useState(true);
   const [view, setView] = useState<"builder" | "draft" | "report">("builder");
   const [notice, setNotice] = useState("");
   const [fileError, setFileError] = useState("");
@@ -69,13 +71,16 @@ export default function App() {
   const t = copy[project.locale];
   const question = questions[current];
   const progress = completion(project);
-  const draft = useMemo(() => buildDraft(project.clubName, project.answers), [project.clubName, project.answers]);
+  const draft = useMemo(() => buildDraft(project.clubName, project.answers, project.customAnswers), [project.clubName, project.answers, project.customAnswers]);
   const findings = useMemo(() => projectReadiness(project), [project]);
   const affected = draft.filter((item) => item.questionIds.includes(question.id));
 
   useEffect(() => {
-    get<BuilderProject>(STORAGE_KEY).then((saved) => {
-      if (saved?.version === 1) setProject(saved);
+    get<BuilderProject & { version: number }>(STORAGE_KEY).then((saved) => {
+      if (saved && [1, 2].includes(saved.version)) {
+        setProject({ ...saved, version: 2, customAnswers: saved.customAnswers || {} });
+        if (Object.keys(saved.answers || {}).length) setShowOverview(false);
+      }
       setHydrated(true);
     });
   }, []);
@@ -100,6 +105,23 @@ export default function App() {
 
   const update = (patch: Partial<BuilderProject>) => setProject((value) => ({ ...value, ...patch }));
   const answer = (value: string) => update({ answers: { ...project.answers, [question.id]: value } });
+  const chooseOther = () => {
+    const recommended = question.choices.find((choice) => choice.recommended) || question.choices[0];
+    update({
+      answers: { ...project.answers, [question.id]: "other" },
+      customAnswers: {
+        ...project.customAnswers,
+        [question.id]: project.customAnswers[question.id] || { en: recommended.label.en, es: recommended.label.es }
+      }
+    });
+  };
+  const editOther = (value: string) => update({
+    answers: { ...project.answers, [question.id]: "other" },
+    customAnswers: {
+      ...project.customAnswers,
+      [question.id]: { ...(project.customAnswers[question.id] || { en: "", es: "" }), [project.locale]: value }
+    }
+  });
   const flash = (message: string) => {
     setNotice(message);
     window.setTimeout(() => setNotice(""), 1800);
@@ -124,6 +146,7 @@ export default function App() {
       const { importProject } = await import("./lib/documents");
       setProject(await importProject(file));
       setCurrent(0);
+      setShowOverview(false);
       setView("builder");
     } catch {
       setFileError(project.locale === "en" ? "That project file is not valid." : "Ese archivo de proyecto no es válido.");
@@ -168,6 +191,7 @@ export default function App() {
     await del(STORAGE_KEY);
     setProject(createProject());
     setCurrent(0);
+    setShowOverview(true);
     setView("builder");
     setAiResult("");
   }
@@ -226,7 +250,29 @@ export default function App() {
         <button aria-pressed={view === "report"} className={view === "report" ? "active" : ""} onClick={() => setView("report")}>{t.report}<span>{findings.filter((item) => item.status !== "complete").length}</span></button>
       </nav>
 
-      {view === "builder" && (
+      {view === "builder" && showOverview && (
+        <main className="welcome-layout" aria-labelledby="overview-title">
+          <section className="welcome-copy">
+            <BookOpen size={30} aria-hidden="true" />
+            <h1 id="overview-title">{project.locale === "en" ? "Build bylaws one decision at a time" : "Cree estatutos una decisión a la vez"}</h1>
+            <p>{project.locale === "en"
+              ? "DemClubs turns your club’s governance choices into a detailed working draft. It follows the topics in the SDCDP Club Manual’s model bylaws and shows what still needs member review."
+              : "DemClubs convierte las decisiones de gobierno de su club en un borrador de trabajo detallado. Sigue los temas de los estatutos modelo del Manual de Clubes de SDCDP y muestra lo que aún requiere revisión de los miembros."}</p>
+            <div className="welcome-actions">
+              <button className="primary" onClick={() => setShowOverview(false)}>{project.locale === "en" ? "Begin the first decision" : "Comenzar la primera decisión"}<ArrowRight size={17} /></button>
+              <button onClick={() => setView("draft")}>{project.locale === "en" ? "Preview the draft structure" : "Ver la estructura del borrador"}</button>
+            </div>
+          </section>
+          <ol className="welcome-steps">
+            <li><ListChecks aria-hidden="true" /><div><strong>{project.locale === "en" ? "Choose or write your rule" : "Elija o escriba su regla"}</strong><p>{project.locale === "en" ? "Compare practical alternatives. Every question also includes an editable Other option seeded with recommended language." : "Compare alternativas prácticas. Cada pregunta también incluye una opción editable Otra con texto recomendado inicial."}</p></div></li>
+            <li><FileCheck2 aria-hidden="true" /><div><strong>{project.locale === "en" ? "Watch the draft take shape" : "Vea cómo toma forma el borrador"}</strong><p>{project.locale === "en" ? "Your answers update the relevant article, while unresolved and required decisions remain visible." : "Sus respuestas actualizan el artículo correspondiente, mientras las decisiones pendientes y obligatorias siguen visibles."}</p></div></li>
+            <li><ShieldCheck aria-hidden="true" /><div><strong>{project.locale === "en" ? "Review, edit, and adopt" : "Revise, edite y adopte"}</strong><p>{project.locale === "en" ? "Export an editable DOCX or Markdown draft for committee and member review. Work stays on this device unless you explicitly request AI review." : "Exporte un borrador DOCX o Markdown editable para revisión del comité y los miembros. El trabajo permanece en este dispositivo salvo que solicite expresamente una revisión con IA."}</p></div></li>
+          </ol>
+          <p className="welcome-note">{project.locale === "en" ? `${questions.length} decisions · usually 20–30 minutes · educational drafting assistance, not party approval` : `${questions.length} decisiones · normalmente 20–30 minutos · asistencia educativa, no aprobación del partido`}</p>
+        </main>
+      )}
+
+      {view === "builder" && !showOverview && (
         <main className="ledger-layout">
           <aside className="section-rail" aria-label={project.locale === "en" ? "Bylaws sections" : "Secciones de estatutos"}>
             <div className="progress-block"><span>{progress.percent}%</span><small>{progress.decided} / {progress.total} {t.answered}</small><div className="progress-track"><i style={{ width: `${progress.percent}%` }} /></div></div>
@@ -257,6 +303,12 @@ export default function App() {
                   </label>
                 );
               })}
+              <label className={`choice-row choice-other ${project.answers[question.id] === "other" ? "selected" : ""}`}>
+                <input type="radio" name={question.id} value="other" checked={project.answers[question.id] === "other"} onChange={chooseOther} />
+                <span className="choice-control" aria-hidden="true">{project.answers[question.id] === "other" && <Check size={15} />}</span>
+                <span><strong>{project.locale === "en" ? "Other — edit the recommended language" : "Otra — edite el texto recomendado"}</strong><small>{project.locale === "en" ? "Use a club-specific rule. Selecting this starts with the recommended text rather than a blank field." : "Use una regla específica del club. Al seleccionarla, comienza con el texto recomendado en lugar de un campo vacío."}</small></span>
+              </label>
+              {project.answers[question.id] === "other" && <label className="custom-answer"><span>{project.locale === "en" ? "Text to use in the draft" : "Texto que se usará en el borrador"}</span><textarea value={project.customAnswers[question.id]?.[project.locale] || ""} onChange={(event) => editOther(event.target.value)} /></label>}
             </fieldset>
             <div className="why-row"><strong>{project.locale === "en" ? "Why this matters" : "Por qué importa"}</strong><p>{question.why[project.locale]}</p></div>
             <div className="decision-navigation">
@@ -276,7 +328,7 @@ export default function App() {
       {view === "draft" && (
         <main className="result-layout">
           <header className="result-header"><div><span className={progress.percent === 100 ? "ready" : "working"}>{progress.percent === 100 ? t.ready : t.working}</span><h1>{project.clubName || (project.locale === "en" ? "Club bylaws" : "Estatutos del club")}</h1><p>{progress.percent === 100 ? t.disclaimer : `${questions.length - progress.decided} ${t.unresolved}`}</p></div><div className="export-actions"><button onClick={copyDraft}><Clipboard size={16} />{t.copyDraft}</button><button onClick={exportMarkdownFile}><FileText size={16} />{t.markdown}</button><button className="primary" onClick={exportDocxFile}><Download size={16} />{t.docx}</button></div></header>
-          <article className="draft-document">{draft.map((section) => <section key={section.id} className={section.questionIds.some((id) => !project.answers[id]) ? "unresolved" : ""}><h2>{section.title[project.locale]}</h2><p>{section.body[project.locale]}</p></section>)}</article>
+          <article className="draft-document">{draft.map((section) => <section key={section.id} className={section.questionIds.some((id) => !project.answers[id]) ? "unresolved" : ""}><h2>{section.title[project.locale]}</h2>{section.body[project.locale].split("\n\n").map((paragraph, index) => <p key={index}>{paragraph}</p>)}</section>)}</article>
         </main>
       )}
 
@@ -291,7 +343,7 @@ export default function App() {
       <footer className="footer"><p>{t.disclaimer}</p><div><button onClick={() => setMethodOpen(true)}>{t.sources}</button><button onClick={clearProject}>{t.delete}</button></div></footer>
       {notice && <div className="toast" role="status">{notice}</div>}
 
-      <dialog ref={methodDialog} className="dialog" aria-labelledby="method-title" onClose={() => setMethodOpen(false)}><button className="dialog-close" aria-label={t.close} onClick={() => setMethodOpen(false)}><X /></button><ShieldCheck size={24} /><h2 id="method-title">{t.methodTitle}</h2><p>{t.methodBody}</p><ul><li><a href="https://www.sddemocrats.org/clubs.html" target="_blank" rel="noreferrer">San Diego County Democratic Party club directory</a></li><li><a href="https://www.sddemocrats.org/resources.html" target="_blank" rel="noreferrer">County Party club resources</a></li><li><a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTK6eJsO_TeNWWHjY26LgV-OijUmdtK5STsKWvZCZlJQcG5-9cqXmdSuf_XuIBZzcAS9FPWfx_DGk2F/pubhtml?gid=2054796545&single=true" target="_blank" rel="noreferrer">2026 chartered-clubs source sheet</a></li></ul><button className="primary" onClick={() => setMethodOpen(false)}>{t.close}</button></dialog>
+      <dialog ref={methodDialog} className="dialog" aria-labelledby="method-title" onClose={() => setMethodOpen(false)}><button className="dialog-close" aria-label={t.close} onClick={() => setMethodOpen(false)}><X /></button><ShieldCheck size={24} /><h2 id="method-title">{t.methodTitle}</h2><p>{t.methodBody}</p><h3>{project.locale === "en" ? "Controlling party documents" : "Documentos partidarios rectores"}</h3><ul><li><a href="https://www.sddemocrats.org/" target="_blank" rel="noreferrer">San Diego County Democratic Party</a></li><li><a href="https://docs.google.com/document/u/0/d/1n47aKUdh-cEpVpC7N_-2_w5dCZZxz255/" target="_blank" rel="noreferrer">SDCDP Bylaws</a></li><li><a href="https://docs.google.com/document/u/0/d/1xtEULc3GuBF_zxGOwzMUj4u4dL0LZiJF/" target="_blank" rel="noreferrer">SDCDP Policies and Procedures</a></li><li><a href="https://cadem.org/wp-content/uploads/2026/02/CDP-BYLAWS-October-2025-FINAL.pdf" target="_blank" rel="noreferrer">California Democratic Party Bylaws &amp; Rules — October 2025 (PDF)</a></li></ul><h3>{project.locale === "en" ? "Research context" : "Contexto de investigación"}</h3><ul><li><a href="https://www.sddemocrats.org/clubs.html" target="_blank" rel="noreferrer">San Diego County Democratic Party club directory</a></li><li><a href="https://www.sddemocrats.org/resources.html" target="_blank" rel="noreferrer">County Party club resources and Club Manual</a></li><li><a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTK6eJsO_TeNWWHjY26LgV-OijUmdtK5STsKWvZCZlJQcG5-9cqXmdSuf_XuIBZzcAS9FPWfx_DGk2F/pubhtml?gid=2054796545&single=true" target="_blank" rel="noreferrer">2026 chartered-clubs source sheet</a></li></ul><button className="primary" onClick={() => setMethodOpen(false)}>{t.close}</button></dialog>
     </div>
   );
 }

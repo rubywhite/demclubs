@@ -22,12 +22,13 @@ export interface QuestionDefinition {
 }
 
 export interface BuilderProject {
-  version: 1;
+  version: 2;
   mode: "new" | "audit";
   locale: Locale;
   clubName: string;
   clubType: string;
   answers: Record<string, string>;
+  customAnswers: Record<string, Localized>;
   importedText: string;
   updatedAt: string;
 }

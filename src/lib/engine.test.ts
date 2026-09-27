@@ -34,4 +34,34 @@ describe("deterministic bylaws engine", () => {
     expect(output).toContain("Artículo XII");
     expect(output).not.toContain("DECISIÓN PENDIENTE");
   });
+
+  it("uses editable Other language in the generated draft", () => {
+    const project = createProject();
+    project.answers.membership_eligibility = "other";
+    project.customAnswers.membership_eligibility = {
+      en: "Voting membership is open to registered Democrats and pledged Democrats.",
+      es: "La membresía con voto está abierta a demócratas registrados y comprometidos."
+    };
+    const output = markdownDraft(project, "en");
+    expect(output).toContain("Voting membership is open to registered Democrats and pledged Democrats.");
+  });
+
+  it("includes current County endorsement and charter requirements", () => {
+    const project = createProject();
+    project.answers = Object.fromEntries(questions.map((question) => [question.id, question.choices[0].value]));
+    const output = markdownDraft(project, "en");
+    expect(output).toContain("at least five business days beforehand");
+    expect(output).toContain("not the official endorsement of the California Democratic Party");
+    expect(output).toContain("within 30 days");
+  });
+
+  it("includes current CDP pre-endorsing representative rules", () => {
+    const project = createProject();
+    project.answers = Object.fromEntries(questions.map((question) => [question.id, question.choices[0].value]));
+    const output = markdownDraft(project, "en");
+    expect(output).toContain("Equal Division Rule");
+    expect(output).toContain("may represent only one club");
+    expect(output).toContain("may not vote by proxy");
+    expect(output).toContain("at least 48 hours before the Area Caucus");
+  });
 });
