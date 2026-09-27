@@ -19,7 +19,7 @@ const copy = {
     next: "Next decision", review: "Review results", required: "Required before review", impact: "Draft impact", notSet: "No option recorded",
     import: "Bring in existing bylaws", importHelp: "Upload a text-based PDF, DOCX, or TXT file, or paste text. It stays in this browser unless you opt into AI review.", choose: "Choose file",
     paste: "Paste bylaws text", imported: "Document text imported", scanned: "This PDF appears to be scanned. OCR is not included; paste accessible text instead.",
-    unsupported: "Use a PDF, DOCX, or TXT file under 10 MB.", draft: "Draft", report: "Readiness", sources: "Sources & method",
+    unsupported: "Use a PDF, DOCX, or TXT file under 10 MB.", draft: "Draft", report: "Readiness", sources: "Documentation",
     working: "Working draft", unresolved: "unresolved decisions", ready: "Ready for club review", copyDraft: "Copy draft", copied: "Copied",
     docx: "Download DOCX", markdown: "Download Markdown", reportDownload: "Download report", ai: "Enhanced review",
     aiHelp: "Optional AI can suggest follow-up questions and clearer wording. The rules and your recorded decisions remain authoritative.",
@@ -36,7 +36,7 @@ const copy = {
     next: "Siguiente decisión", review: "Revisar resultados", required: "Requerido antes de la revisión", impact: "Impacto en el borrador", notSet: "Ninguna opción registrada",
     import: "Incorporar estatutos existentes", importHelp: "Suba un PDF con texto, DOCX o TXT, o pegue texto. Permanecerá en este navegador salvo que active la revisión con IA.", choose: "Elegir archivo",
     paste: "Pegue el texto de los estatutos", imported: "Texto del documento importado", scanned: "Este PDF parece escaneado. La versión inicial no incluye OCR; pegue texto accesible.",
-    unsupported: "Use un archivo PDF, DOCX o TXT de menos de 10 MB.", draft: "Borrador", report: "Preparación", sources: "Fuentes y método",
+    unsupported: "Use un archivo PDF, DOCX o TXT de menos de 10 MB.", draft: "Borrador", report: "Preparación", sources: "Documentación",
     working: "Borrador de trabajo", unresolved: "decisiones pendientes", ready: "Listo para revisión del club", copyDraft: "Copiar borrador", copied: "Copiado",
     docx: "Descargar DOCX", markdown: "Descargar Markdown", reportDownload: "Descargar informe", ai: "Revisión mejorada",
     aiHelp: "La IA opcional puede sugerir preguntas de seguimiento y redacción más clara. Las reglas y decisiones registradas siguen siendo la autoridad.",
@@ -58,16 +58,14 @@ export default function App() {
   const [hydrated, setHydrated] = useState(false);
   const [current, setCurrent] = useState(0);
   const [showOverview, setShowOverview] = useState(true);
-  const [view, setView] = useState<"builder" | "draft" | "report">("builder");
+  const [view, setView] = useState<"builder" | "draft" | "report" | "documentation">(() => window.location.pathname.replace(/\/+$/, "") === "/bylaws/documentation" ? "documentation" : "builder");
   const [notice, setNotice] = useState("");
   const [fileError, setFileError] = useState("");
-  const [methodOpen, setMethodOpen] = useState(false);
   const [aiConsent, setAiConsent] = useState(false);
   const [aiResult, setAiResult] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"saved" | "saving" | "error">("saved");
   const projectInput = useRef<HTMLInputElement>(null);
-  const methodDialog = useRef<HTMLDialogElement>(null);
   const t = copy[project.locale];
   const question = questions[current];
   const progress = completion(project);
@@ -95,13 +93,6 @@ export default function App() {
     }, 250);
     return () => window.clearTimeout(timer);
   }, [project, hydrated]);
-
-  useEffect(() => {
-    const dialog = methodDialog.current;
-    if (!dialog) return;
-    if (methodOpen && !dialog.open) dialog.showModal();
-    if (!methodOpen && dialog.open) dialog.close();
-  }, [methodOpen]);
 
   const update = (patch: Partial<BuilderProject>) => setProject((value) => ({ ...value, ...patch }));
   const answer = (value: string) => update({ answers: { ...project.answers, [question.id]: value } });
@@ -206,16 +197,16 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#current-decision">{t.skip}</a>
+      <a className="skip-link" href={view === "documentation" ? "#documentation-content" : "#current-decision"}>{view === "documentation" ? (project.locale === "en" ? "Skip to documentation" : "Ir a la documentación") : t.skip}</a>
       <header className="masthead">
-        <a className="brand" href="#top" aria-label={`${t.title} ${t.product}`}>
+        <a className="brand" href="/bylaws/" aria-label={`${t.title} ${t.product}`}>
           <span className="brand-mark" aria-hidden="true">D</span>
           <span><strong>{t.title}</strong><small>{t.product}</small></span>
         </a>
-        <div className="mode-switch" aria-label={project.locale === "en" ? "Project mode" : "Modo del proyecto"}>
+        {view === "documentation" ? <a className="docs-back" href="/bylaws/">{project.locale === "en" ? "Open the builder" : "Abrir el constructor"}<ArrowRight size={16} /></a> : <div className="mode-switch" aria-label={project.locale === "en" ? "Project mode" : "Modo del proyecto"}>
           <button aria-pressed={project.mode === "new"} className={project.mode === "new" ? "active" : ""} onClick={() => update({ mode: "new" })}>{t.new}</button>
           <button aria-pressed={project.mode === "audit"} className={project.mode === "audit" ? "active" : ""} onClick={() => update({ mode: "audit" })}>{t.audit}</button>
-        </div>
+        </div>}
         <div className="masthead-actions">
           <span className={`privacy-note ${saveStatus === "error" ? "save-error" : ""}`} role="status"><LockKeyhole size={14} /> {saveStatus === "saving" ? t.saving : saveStatus === "error" ? t.saveError : t.private}</span>
           <button className="language-button" onClick={() => update({ locale: project.locale === "en" ? "es" : "en" })}>
@@ -224,7 +215,7 @@ export default function App() {
         </div>
       </header>
 
-      <section className="project-strip" id="top">
+      {view !== "documentation" && <section className="project-strip" id="top">
         <label>{t.club}<input value={project.clubName} onChange={(event) => update({ clubName: event.target.value })} placeholder={project.locale === "en" ? "e.g. Coastal Democratic Club" : "p. ej., Club Demócrata Costero"} /></label>
         <label>{t.type}<span className="select-wrap"><select value={project.clubType} onChange={(event) => update({ clubType: event.target.value })}><option value="geographic">{t.geographic}</option><option value="affinity">{t.affinity}</option><option value="student">{t.student}</option></select><ChevronDown size={16} /></span></label>
         <div className="project-tools">
@@ -232,9 +223,9 @@ export default function App() {
           <button onClick={() => projectInput.current?.click()}><Upload size={16} />{t.importProject}</button>
           <input ref={projectInput} className="visually-hidden" type="file" accept="application/json,.json" onChange={(event) => handleProject(event.target.files?.[0])} />
         </div>
-      </section>
+      </section>}
 
-      {project.mode === "audit" && (
+      {view !== "documentation" && project.mode === "audit" && (
         <section className="import-band" aria-labelledby="import-title">
           <div><h2 id="import-title">{t.import}</h2><p>{t.importHelp}</p></div>
           <label className="file-button"><Upload size={18} />{t.choose}<input type="file" accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" onChange={(event) => handleDocument(event.target.files?.[0])} /></label>
@@ -244,11 +235,11 @@ export default function App() {
         </section>
       )}
 
-      <nav className="view-tabs" aria-label={project.locale === "en" ? "Workspace views" : "Vistas del espacio de trabajo"}>
+      {view !== "documentation" && <nav className="view-tabs" aria-label={project.locale === "en" ? "Workspace views" : "Vistas del espacio de trabajo"}>
         <button aria-pressed={view === "builder"} className={view === "builder" ? "active" : ""} onClick={() => setView("builder")}>{t.product}</button>
         <button aria-pressed={view === "draft"} className={view === "draft" ? "active" : ""} onClick={() => setView("draft")}>{t.draft}</button>
         <button aria-pressed={view === "report"} className={view === "report" ? "active" : ""} onClick={() => setView("report")}>{t.report}<span>{findings.filter((item) => item.status !== "complete").length}</span></button>
-      </nav>
+      </nav>}
 
       {view === "builder" && showOverview && (
         <main className="welcome-layout" aria-labelledby="overview-title">
@@ -340,10 +331,62 @@ export default function App() {
         </main>
       )}
 
-      <footer className="footer"><p>{t.disclaimer}</p><div><button onClick={() => setMethodOpen(true)}>{t.sources}</button><button onClick={clearProject}>{t.delete}</button></div></footer>
-      {notice && <div className="toast" role="status">{notice}</div>}
+      {view === "documentation" && (
+        <main className="documentation-layout" id="documentation-content">
+          <header className="documentation-hero">
+            <div><BookOpen size={30} aria-hidden="true" /><h1>{project.locale === "en" ? "Documentation" : "Documentación"}</h1></div>
+            <p>{project.locale === "en" ? "How DemClubs classifies rules, builds drafts, and packages the same method for use with your own AI agent." : "Cómo DemClubs clasifica las reglas, crea borradores y empaqueta el mismo método para usarlo con su propio agente de IA."}</p>
+            <dl><div><dt>{project.locale === "en" ? "Rule pack" : "Paquete de reglas"}</dt><dd>v0.2.1</dd></div><div><dt>{project.locale === "en" ? "Verified" : "Verificado"}</dt><dd>{project.locale === "en" ? "September 27, 2026" : "27 de septiembre de 2026"}</dd></div><div><dt>{project.locale === "en" ? "Jurisdiction" : "Jurisdicción"}</dt><dd>San Diego County</dd></div></dl>
+          </header>
 
-      <dialog ref={methodDialog} className="dialog" aria-labelledby="method-title" onClose={() => setMethodOpen(false)}><button className="dialog-close" aria-label={t.close} onClick={() => setMethodOpen(false)}><X /></button><ShieldCheck size={24} /><h2 id="method-title">{t.methodTitle}</h2><p>{t.methodBody}</p><h3>{project.locale === "en" ? "Controlling party documents" : "Documentos partidarios rectores"}</h3><ul><li><a href="https://www.sddemocrats.org/" target="_blank" rel="noreferrer">San Diego County Democratic Party</a></li><li><a href="https://docs.google.com/document/u/0/d/1n47aKUdh-cEpVpC7N_-2_w5dCZZxz255/" target="_blank" rel="noreferrer">SDCDP Bylaws</a></li><li><a href="https://docs.google.com/document/u/0/d/1xtEULc3GuBF_zxGOwzMUj4u4dL0LZiJF/" target="_blank" rel="noreferrer">SDCDP Policies and Procedures</a></li><li><a href="https://cadem.org/wp-content/uploads/2026/02/CDP-BYLAWS-October-2025-FINAL.pdf" target="_blank" rel="noreferrer">California Democratic Party Bylaws &amp; Rules — October 2025 (PDF)</a></li></ul><h3>{project.locale === "en" ? "Research context" : "Contexto de investigación"}</h3><ul><li><a href="https://www.sddemocrats.org/clubs.html" target="_blank" rel="noreferrer">San Diego County Democratic Party club directory</a></li><li><a href="https://www.sddemocrats.org/resources.html" target="_blank" rel="noreferrer">County Party club resources and Club Manual</a></li><li><a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTK6eJsO_TeNWWHjY26LgV-OijUmdtK5STsKWvZCZlJQcG5-9cqXmdSuf_XuIBZzcAS9FPWfx_DGk2F/pubhtml?gid=2054796545&single=true" target="_blank" rel="noreferrer">2026 chartered-clubs source sheet</a></li></ul><button className="primary" onClick={() => setMethodOpen(false)}>{t.close}</button></dialog>
+          <div className="documentation-grid">
+            <nav className="documentation-index" aria-label={project.locale === "en" ? "Documentation sections" : "Secciones de documentación"}>
+              <a href="#method">{project.locale === "en" ? "Method" : "Método"}</a>
+              <a href="#skill">{project.locale === "en" ? "Agent skill" : "Skill para agentes"}</a>
+              <a href="#using-skill">{project.locale === "en" ? "How to use it" : "Cómo usarlo"}</a>
+              <a href="#sources">{project.locale === "en" ? "Sources" : "Fuentes"}</a>
+              <a href="#limits">{project.locale === "en" ? "Limits & privacy" : "Límites y privacidad"}</a>
+            </nav>
+
+            <article className="documentation-body">
+              <section id="method">
+                <h2>{project.locale === "en" ? "A decision record, not a black box" : "Un registro de decisiones, no una caja negra"}</h2>
+                <p>{project.locale === "en" ? "DemClubs separates controlling Party requirements from recommended safeguards, common local practice, and club preferences. Every generated clause traces to a governing requirement or an answer recorded by the club; unresolved choices remain visible." : "DemClubs distingue los requisitos partidarios rectores de las salvaguardas recomendadas, las prácticas locales comunes y las preferencias del club. Cada cláusula generada proviene de un requisito rector o de una respuesta registrada por el club; las decisiones pendientes permanecen visibles."}</p>
+                <div className="classification-list"><div><strong>{project.locale === "en" ? "Required" : "Obligatorio"}</strong><span>{project.locale === "en" ? "Current SDCDP charter or endorsement provision, or an applicable CDP representative rule." : "Disposición vigente de afiliación o respaldo de SDCDP, o regla aplicable del CDP para representantes."}</span></div><div><strong>{project.locale === "en" ? "Safeguard" : "Salvaguarda"}</strong><span>{project.locale === "en" ? "A recommended protection against ambiguity, capture, exclusion, or weak accountability." : "Protección recomendada contra ambigüedad, control indebido, exclusión o rendición de cuentas débil."}</span></div><div><strong>{project.locale === "en" ? "Common practice" : "Práctica común"}</strong><span>{project.locale === "en" ? "A frequent local pattern that is useful but not controlling." : "Patrón local frecuente que resulta útil, pero no es rector."}</span></div><div><strong>{project.locale === "en" ? "Preference" : "Preferencia"}</strong><span>{project.locale === "en" ? "A policy choice that belongs to the club's members." : "Decisión de política que corresponde a los miembros del club."}</span></div></div>
+              </section>
+
+              <section id="skill">
+                <h2>{project.locale === "en" ? "Use the method with your own agent" : "Use el método con su propio agente"}</h2>
+                <p>{project.locale === "en" ? "The DemClubs skill is a portable Agent Skills folder. It contains the interview workflow, County and State requirements, drafting guidance, decision and review templates, and a local coverage checker. It requires no DemClubs account and no MCP server." : "El skill de DemClubs es una carpeta portátil de Agent Skills. Contiene el flujo de entrevista, los requisitos del Condado y del Estado, orientación de redacción, plantillas de decisiones y revisión, y una verificación local de cobertura. No requiere una cuenta de DemClubs ni un servidor MCP."}</p>
+                <div className="skill-downloads"><a className="primary" href="/bylaws/downloads/demclubs-bylaws-v0.2.1.zip" download><Download size={17} />{project.locale === "en" ? "Download complete skill (.zip)" : "Descargar skill completo (.zip)"}</a><a href="/bylaws/skills/demclubs-bylaws/SKILL.md" download><FileText size={17} />{project.locale === "en" ? "Download SKILL.md" : "Descargar SKILL.md"}</a></div>
+                <p className="documentation-note">{project.locale === "en" ? "The ZIP is recommended because SKILL.md refers to the included requirements, templates, and validator. The standalone file is provided for inspection or manual setup." : "Se recomienda el ZIP porque SKILL.md hace referencia a los requisitos, plantillas y validador incluidos. El archivo individual se ofrece para inspección o configuración manual."}</p>
+                <div className="skill-contents"><h3>{project.locale === "en" ? "Included" : "Incluye"}</h3><ul><li>{project.locale === "en" ? "A 28-decision interview sequence with editable alternatives" : "Una secuencia de 28 decisiones con alternativas editables"}</li><li>{project.locale === "en" ? "Current SDCDP charter and endorsement requirements" : "Requisitos vigentes de afiliación y respaldo de SDCDP"}</li><li>{project.locale === "en" ? "Applicable CDP pre-endorsing representative rules" : "Reglas aplicables del CDP para representantes de pre-respaldo"}</li><li>{project.locale === "en" ? "Decision-record and readiness-report templates" : "Plantillas de registro de decisiones e informe de preparación"}</li><li>{project.locale === "en" ? "A dependency-free, local text coverage checker" : "Una verificación local de cobertura de texto sin dependencias"}</li></ul></div>
+              </section>
+
+              <section id="using-skill">
+                <h2>{project.locale === "en" ? "How to use the skill" : "Cómo usar el skill"}</h2>
+                <ol className="usage-steps"><li><strong>{project.locale === "en" ? "Download and unpack" : "Descargue y descomprima"}</strong><span>{project.locale === "en" ? "Keep the demclubs-bylaws folder intact so its references, assets, and script remain available." : "Mantenga intacta la carpeta demclubs-bylaws para conservar sus referencias, recursos y script."}</span></li><li><strong>{project.locale === "en" ? "Import or copy the folder" : "Importe o copie la carpeta"}</strong><span>{project.locale === "en" ? "Add it to the skills or capabilities directory supported by your agent. Agent products differ, so follow that product's skill-import instructions." : "Añádala al directorio de skills o capacidades compatible con su agente. Los productos varían; siga las instrucciones de importación de su producto."}</span></li><li><strong>{project.locale === "en" ? "Ask for the workflow" : "Solicite el flujo de trabajo"}</strong><span>{project.locale === "en" ? "Invoke demclubs-bylaws explicitly or ask the agent to create, improve, or review San Diego Democratic club bylaws." : "Invoque demclubs-bylaws expresamente o pida al agente crear, mejorar o revisar estatutos de un club demócrata de San Diego."}</span></li><li><strong>{project.locale === "en" ? "Keep the version visible" : "Mantenga visible la versión"}</strong><span>{project.locale === "en" ? "The agent should identify rule pack v0.2.1 and its verification date in full reports." : "El agente debe identificar el paquete de reglas v0.2.1 y su fecha de verificación en los informes completos."}</span></li></ol>
+                <div className="prompt-examples"><h3>{project.locale === "en" ? "Example requests" : "Solicitudes de ejemplo"}</h3><blockquote>{project.locale === "en" ? "Use demclubs-bylaws to interview our bylaws committee and prepare a complete working draft." : "Use demclubs-bylaws para entrevistar a nuestro comité de estatutos y preparar un borrador de trabajo completo."}</blockquote><blockquote>{project.locale === "en" ? "Review these existing bylaws, identify missing County and State requirements, and give us a decision record before proposing revisions." : "Revise estos estatutos, identifique requisitos faltantes del Condado y del Estado y entréguenos un registro de decisiones antes de proponer revisiones."}</blockquote></div>
+              </section>
+
+              <section id="sources">
+                <h2>{project.locale === "en" ? "Authority and sources" : "Autoridad y fuentes"}</h2>
+                <p>{project.locale === "en" ? "Current controlling rules take priority over the DemClubs synthesis and the older Club Manual model. Requirements for organizations chartered directly by the CDP are not automatically applied to ordinary county-chartered clubs." : "Las reglas rectoras vigentes tienen prioridad sobre la síntesis de DemClubs y el modelo anterior del Manual de Clubes. Los requisitos para organizaciones afiliadas directamente por el CDP no se aplican automáticamente a clubes afiliados por el condado."}</p>
+                <ul className="source-list"><li><a href="https://www.sddemocrats.org/" target="_blank" rel="noreferrer">San Diego County Democratic Party</a></li><li><a href="https://docs.google.com/document/u/0/d/1n47aKUdh-cEpVpC7N_-2_w5dCZZxz255/" target="_blank" rel="noreferrer">SDCDP Bylaws</a></li><li><a href="https://docs.google.com/document/u/0/d/1xtEULc3GuBF_zxGOwzMUj4u4dL0LZiJF/" target="_blank" rel="noreferrer">SDCDP Policies and Procedures</a></li><li><a href="https://cadem.org/wp-content/uploads/2026/02/CDP-BYLAWS-October-2025-FINAL.pdf" target="_blank" rel="noreferrer">California Democratic Party Bylaws &amp; Rules — October 2025 (PDF)</a></li><li><a href="https://www.sddemocrats.org/resources.html" target="_blank" rel="noreferrer">SDCDP club resources and Club Manual</a></li><li><a href="https://www.sddemocrats.org/clubs.html" target="_blank" rel="noreferrer">SDCDP club directory</a></li></ul>
+              </section>
+
+              <section id="limits">
+                <h2>{project.locale === "en" ? "Limits and privacy" : "Límites y privacidad"}</h2>
+                <p>{project.locale === "en" ? "DemClubs provides educational drafting assistance, not legal advice or Party approval. Keyword coverage is not proof that a provision is complete, internally consistent, validly adopted, or current." : "DemClubs ofrece asistencia educativa de redacción, no asesoría legal ni aprobación partidaria. La presencia de palabras clave no demuestra que una disposición esté completa, sea coherente, haya sido adoptada válidamente o esté vigente."}</p>
+                <p>{project.locale === "en" ? "The web builder saves projects on the device. The downloadable skill runs wherever the user's chosen agent runs; that agent's privacy and data-handling terms apply. The skill itself sends nothing to DemClubs and requires no external service." : "El constructor web guarda los proyectos en el dispositivo. El skill descargable se ejecuta donde opere el agente elegido por el usuario; se aplican los términos de privacidad y tratamiento de datos de ese agente. El skill no envía nada a DemClubs ni requiere un servicio externo."}</p>
+              </section>
+            </article>
+          </div>
+        </main>
+      )}
+
+      <footer className="footer"><p>{t.disclaimer}</p><div><a href="/bylaws/documentation/">{t.sources}</a><a href="/bylaws/skills/demclubs-bylaws/SKILL.md" download>SKILL.md</a><a href="/bylaws/downloads/demclubs-bylaws-v0.2.1.zip" download>{project.locale === "en" ? "Skill ZIP" : "ZIP del skill"}</a>{view !== "documentation" && <button onClick={clearProject}>{t.delete}</button>}</div></footer>
+      {notice && <div className="toast" role="status">{notice}</div>}
     </div>
   );
 }

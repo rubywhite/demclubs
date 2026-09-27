@@ -14,7 +14,7 @@ Club officers and bylaws committees must turn governance choices into a reviewab
 
 **OWN-WORLD:** Cool white and pale civic-blue paper, midnight navy ink, cobalt actions, and vermilion only for conflicts. A narrow ruled margin carries authority and readiness. Workhorse sans typography, tabular numerals, square controls, restrained 10–14px corners, and hairline rules make the surface feel filed, durable, and legible.
 
-**STORY:** The visitor first sees a concise overview of the workflow, chooses whether to create or review, names the club, resolves one governance decision at a time, sees the draft change, and leaves with an editable document and a separate recommendations report. Every decision offers researched alternatives plus editable recommended language. Sources and privacy remain visible without interrupting the task.
+**STORY:** The visitor first sees a concise overview of the workflow, chooses whether to create or review, names the club, resolves one governance decision at a time, sees the draft change, and leaves with an editable document and a separate recommendations report. Every decision offers researched alternatives plus editable recommended language. A dedicated Documentation page explains sources, classification, privacy, and the downloadable Agent Skill without interrupting the drafting task.
 
 **FIRST VIEWPORT:** A slim masthead sits above a full-height three-column working ledger: section rail on the left, the current question in the broad center, and a live “document margin” on the right showing status, authority, and clause impact. On mobile, the rail becomes a section selector and the margin follows the current question. The primary action is the next-decision button at the bottom of the active record.
 

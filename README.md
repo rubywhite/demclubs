@@ -9,6 +9,7 @@ A bilingual, privacy-first tool for San Diego County Democratic clubs to audit e
 - Existing-bylaws audit for text-based PDF, DOCX, TXT, or pasted text
 - Device-only project storage and portable JSON project files
 - DOCX and Markdown bylaws export plus a separate readiness report
+- A portable `demclubs-bylaws` Agent Skill with source references, templates, and a local coverage checker
 - Optional, explicit-consent enhanced review through a server-side Netlify Function
 - Reproducible aggregate analysis of every publicly linked club bylaws document
 
@@ -36,6 +37,10 @@ npm run research
 The repository is configured by `netlify.toml`: build command `npm run build`, publish directory `dist`, and functions directory `netlify/functions`. The build preserves the original landing-page assets at the site root and emits the Vite application beneath `dist/bylaws/`.
 
 The site works without any environment variables. To enable enhanced review, set `OPENAI_API_KEY` in Netlify and optionally set `OPENAI_MODEL`. Review requests require explicit consent, are limited to 45,000 characters, use the Responses API with `store: false`, and never expose the API key to the browser.
+
+## Agent Skill
+
+The portable skill lives at `agent-tools/demclubs-bylaws/`. Run `npm run skill:package` after changing it to rebuild `agent-tools/demclubs-bylaws-v0.2.1.zip`. The production build publishes the complete bundle at `/bylaws/downloads/demclubs-bylaws-v0.2.1.zip` and the readable entrypoint at `/bylaws/skills/demclubs-bylaws/SKILL.md`.
 
 For `demclubs.org`, attach the domain to the Netlify site and configure DNS using the values Netlify provides for that site. Keep the apex and `www` behavior explicit in Netlify’s domain settings.
 
