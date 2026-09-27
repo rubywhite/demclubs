@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-09-27T16:16:40.090Z",
+  "listedClubs": 55,
+  "linkedBylaws": 53,
+  "analyzedBylaws": 53,
+  "prevalence": {
+    "membership": {
+      "count": 53,
+      "denominator": 53,
+      "percent": 100
+    },
+    "dues": {
+      "count": 50,
+      "denominator": 53,
+      "percent": 94
+    },
+    "meetings": {
+      "count": 53,
+      "denominator": 53,
+      "percent": 100
+    },
+    "remoteParticipation": {
+      "count": 18,
+      "denominator": 53,
+      "percent": 34
+    },
+    "quorum": {
+      "count": 51,
+      "denominator": 53,
+      "percent": 96
+    },
+    "officers": {
+      "count": 53,
+      "denominator": 53,
+      "percent": 100
+    },
+    "elections": {
+      "count": 53,
+      "denominator": 53,
+      "percent": 100
+    },
+    "endorsements": {
+      "count": 53,
+      "denominator": 53,
+      "percent": 100
+    },
+    "finances": {
+      "count": 53,
+      "denominator": 53,
+      "percent": 100
+    },
+    "discipline": {
+      "count": 50,
+      "denominator": 53,
+      "percent": 94
+    },
+    "conflicts": {
+      "count": 9,
+      "denominator": 53,
+      "percent": 17
+    },
+    "amendments": {
+      "count": 52,
+      "denominator": 53,
+      "percent": 98
+    },
+    "dissolution": {
+      "count": 9,
+      "denominator": 53,
+      "percent": 17
+    },
+    "parliamentaryAuthority": {
+      "count": 49,
+      "denominator": 53,
+      "percent": 92
+    }
+  }
+}

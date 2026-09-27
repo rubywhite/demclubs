@@ -1,0 +1,22 @@
+{
+  "installedAt": "2026-09-27",
+  "scopes": ["project", "global"],
+  "skills": {
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "path": ".agents/skills/impeccable",
+      "commit": "9d715cc4f5564a990ca8345abfdd5df6dc9b41c8",
+      "license": "Apache-2.0"
+    },
+    "grill-me": {
+      "source": "mattpocock/skills",
+      "path": "skills/productivity/grill-me",
+      "commit": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7"
+    },
+    "grilling": {
+      "source": "mattpocock/skills",
+      "path": "skills/productivity/grilling",
+      "commit": "c55ee46073ed923f86ce59a5eb3b6d895095d1b7"
+    }
+  }
+}
